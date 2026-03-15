@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Structured Forgiveness Journey Coach</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
+<script src="https://unpkg.com/canvas-confetti@1.9.2/dist/confetti.browser.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --warm-cream: #FFF8F0;
+  --sage-green: #7D9B76;
+  --deep-sage: #5A7D52;
+  --warm-gold: #D4A853;
+  --soft-lavender: #B8A9C9;
+  --deep-plum: #6B4C6E;
+  --gentle-coral: #E8967A;
+  --soft-blue: #8AAEC4;
+  --warm-brown: #8B6F4E;
+}
+
+* { -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--warm-cream);
+  min-height: 100vh;
+  overscroll-behavior: none;
+}
+
+h1, h2, h3, .serif { font-family: 'Merriweather', serif; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--sage-green), var(--deep-sage));
+  min-height: 48px;
+  touch-action: manipulation;
+}
+.btn-primary:hover { filter: brightness(1.05); }
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-secondary {
+  background: linear-gradient(135deg, var(--soft-lavender), var(--deep-plum));
+  min-height: 48px;
+  touch-action: manipulation;
+}
+
+.card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border: 1px solid rgba(125,155,118,0.12);
+}
+
+.phase-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  transition: all 0.3s ease;
+}
+.phase-dot.active { width: 14px; height: 14px; box-shadow: 0 0 8px rgba(125,155,118,0.5); }
+.phase-dot.completed { background: var(--sage-green); }
+.phase-dot.current { background: var(--warm-gold); animation: pulse-dot 2s infinite; }
+.phase-dot.upcoming { background: #D1D5DB; }
+
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 4px rgba(212,168,83,0.4); }
+  50% { box-shadow: 0 0 12px rgba(212,168,83,0.7); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.4s ease-out; }
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-up { animation: slideUp 0.5s ease-out; }
+
+.typing-indicator span {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--sage-green);
+  animation: typing 1.4s infinite ease-in-out;
+}
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+.emotion-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--sage-green);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.emotion-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, var(--gentle-coral), var(--warm-gold), var(--sage-green));
+}
+
+textarea, input[type="text"] {
+  font-size: 16px !important; /* Prevents iOS zoom */
+}
+
+.chat-bubble {
+  max-width: 85%;
+  line-height: 1.6;
+}
+
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.nav-item {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+.journal-entry {
+  border-left: 3px solid var(--sage-green);
+}
+</style>
+</head>
+<body x-data="app()" x-init="init()">
+
+<!-- Splash / Onboarding -->
+<div x-show="currentView === 'onboarding'" x-transition class="min-h-screen flex flex-col items-center justify-center px-6 py-8">
+  <div class="text-center max-w-sm slide-up">
+    <div class="text-6xl mb-4">🕊️</div>
+    <h1 class="serif text-3xl font-bold text-gray-800 mb-3" style="color: var(--deep-sage)">Forgiveness Journey</h1>
+    <p class="text-gray-600 text-lg mb-2">A gentle, structured path to healing</p>
+    <p class="text-gray-500 text-sm mb-8">Designed for those ready to release old grievances and find peace in relationships that matter most.</p>
+    
+    <div x-show="onboardingStep === 0" class="fade-in">
+      <div class="card p-6 mb-6 text-left">
+        <p class="text-gray-700 mb-4">Welcome, friend. 🌿 This is a safe, private space for your forgiveness journey. Everything stays on your device unless you choose otherwise.</p>
+        <label class="block text-sm font-medium text-gray-700 mb-2">What should I call you?</label>
+        <input type="text" x-model="userName" placeholder="Your first name..." class="w-full p-3 rounded-xl border border-gray-200 focus:border-green-400 focus:ring-2 focus:ring-green-100 outline-none text-lg">
+      </div>
+      <button @click="if(userName.trim()) onboardingStep = 1" class="btn-primary text-white font-semibold px-8 py-3 rounded-xl w-full text-lg transition-all" :class="{'opacity-50': !userName.trim()}">
+        Continue →
+      </button>
+    </div>
+
+    <div x-show="onboardingStep === 1" class="fade-in">
+      <div class="card p-6 mb-6 text-left">
+        <p class="text-gray-700 mb-4">Nice to meet you, <span x-text="userName" class="font-semibold" style="color: var(--deep-sage)"></span>. 💛</p>
+        <p class="text-gray-600 mb-4">This journey has 5 gentle phases, each at your own pace:</p>
+        <div class="space-y-3">
+          <div class="flex items-center gap-3"><span class="text-xl">📖</span><span class="text-gray-700">Uncovering — Name what happened</span></div>
+          <div class="flex items-center gap-3"><span class="text-xl">💭</span><span class="text-gray-700">Decision — Choose to explore forgiveness</span></div>
+          <div class="flex items-center gap-3"><span class="text-xl">🤝</span><span class="text-gray-700">Work — Build empathy & understanding</span></div>
+          <div class="flex items-center gap-3"><span class="text-xl">🌱</span><span class="text-gray-700">Discovery — Find meaning in the pain</span></div>
+          <div class="flex items-center gap-3"><span class="text-xl">🕊️</span><span class="text-gray-700">Deepening — Release and reconcile</span></div>
+        </div>
+      </div>
+      <button @click="completeOnboarding()" class="btn-primary text-white font-semibold px-8 py-3 rounded-xl w-full text-lg transition-all">
+        Begin My Journey 🌿
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div x-show="currentView !== 'onboarding'" class="min-h-screen flex flex-col pb-20">
+  
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 py-3">
+    <div class="max-w-lg mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">🕊️</span>
+        <h1 class="serif text-lg font-bold" style="color: var(--deep-sage)">Forgiveness Journey</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-gray-500">Day <span x-text="daysSinceStart()"></span></span>
+        <button @click="currentView = 'settings'" class="nav-item flex items-center justify-center rounded-full hover:bg-gray-100 w-10 h-10">
+          ⚙️
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Phase Progress Bar -->
+  <div x-show="currentView === 'home' || currentView === 'journey'" class="px-4 pt-4 pb-2">
+    <div class="max-w-lg mx-auto">
+      <div class="flex items-center justify-between gap-1">
+        <template x-for="(phase, idx) in phases" :key="idx">
+          <div class="flex-1 flex flex-col items-center">
+            <div class="phase-dot" :class="{
+              'completed': idx < currentPhase,
+              'current active': idx === currentPhase,
+              'upcoming': idx > currentPhase
+            }"></div>
+            <span class="text-xs mt-1 text-gray-500 text-center hidden sm:block" x-text="phase.shortName"></span>
+          </div>
+        </template>
+      </div>
+      <div class="flex justify-between mt-1 px-1">
+        <span class="text-xs text-gray-400" x-text="phases[0].shortName"></span>
+        <span class="text-xs text-gray-400" x-text="phases[4].shortName"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOME VIEW -->
+  <div x-show="currentView === 'home'" class="flex-1 px-4 py-4">
+    <div class="max-w-lg mx-auto space-y-4">
+      
+      <!-- Greeting Card -->
+      <div class="card p-5 fade-in" style="background: linear-gradient(135deg, #f0f7ef, #faf8f0)">
+        <p class="text-gray-700 text-lg">Good <span x-text="timeOfDay()"></span>, <span x-text="userName" class="font-semibold" style="color: var(--deep-sage)"></span> 🌿</p>
+        <p class="text-gray-500 mt-1" x-text="getDailyEncouragement()"></p>
+      </div>
+
+      <!-- Current Phase Card -->
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="serif text-lg font-semibold text-gray-800">Phase <span x-text="currentPhase + 1"></span>: <span x-text="phases[currentPhase]?.name"></span></h2>
+          <span class="text-2xl" x-text="phases[currentPhase]?.emoji"></span>
+        </div>
+        <p class="text-gray-600 text-sm mb-4" x-text="phases[currentPhase]?.description"></p>
+        
+        <!-- Phase Progress -->
+        <div class="mb-4">
+          <div class="flex justify-between text-xs text-gray-500 mb-1">
+            <span>Progress</span>
+            <span x-text="getPhaseProgress() + '%'"></span>
+          </div>
+          <div class="w-full bg-gray-100 rounded-full h-2.5">
+            <div class="h-2.5 rounded-full transition-all duration-500" :style="'width:' + getPhaseProgress() + '%; background: linear-gradient(to right, var(--sage-green), var(--warm-gold))'"></div>
+          </div>
+        </div>
+
+        <button @click="currentView = 'journey'" class="btn-primary text-white font-semibold px-6 py-3 rounded-xl w-full text-base transition-all">
+          Continue Journey →
+        </button>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="grid grid-cols-2 gap-3">
+        <button @click="currentView = 'coach'" class="card p-4 text-left hover:shadow-md transition-all active:scale-[0.98]">
+          <span class="text-2xl">💬</span>
+          <p class="font-medium text-gray-700 mt-2">Talk to Coach</p>
+          <p class="text-xs text-gray-500 mt-1">Get personalized guidance</p>
+        </button>
+        <button @click="currentView = 'journal'" class="card p-4 text-left hover:shadow-md transition-all active:scale-[0.98]">
+          <span class="text-2xl">📝</span>
+          <p class="font-medium text-gray-700 mt-2">Journal</p>
+          <p class="text-xs text-gray-500 mt-1">Reflect & release</p>
+        </button>
+        <button @click="currentView = 'exercises'" class="card p-4 text-left hover:shadow-md transition-all active:scale-[0.98]">
+          <span class="text-2xl">🧘</span>
+          <p class="font-medium text-gray-700 mt-2">Exercises</p>
+          <p class="text-xs text-gray-500 mt-1">Guided activities</p>
+        </button>
+        <button @click="currentView = 'insights'" class="card p-4 text-left hover:shadow-md transition-all active:scale-[0.98]">
+          <span class="text-2xl">📊</span>
+          <p class="font-medium text-gray-700 mt-2">My Insights</p>
+          <p class="text-xs text-gray-500 mt-1">Track emotional shifts</p>
+        </button>
+      </div>
+
+      <!-- Today's Check-in -->
+      <div class="card p-5" x-show="!todayCheckedIn">
+        <h3 class="serif text-base font-semibold text-gray-800 mb-3">✨ Daily Check-in</h3>
+        <p class="text-gray-600 text-sm mb-4">How are you feeling about your forgiveness journey today?</p>
+        <div class="mb-4">
+          <input type="range" min="1" max="10" x-model="dailyMood" class="emotion-slider w-full">
+          <div class="flex justify-between text-xs text-gray-400 mt-1">
+            <span>Heavy 😔</span>
+            <span>Peaceful 😌</span>
+          </div>
+        </div>
+        <button @click="submitCheckin()" class="btn-primary text-white font-medium px-6 py-2.5 rounded-xl w-full transition-all">
+          Log Today's Feeling
+        </button>
+      </div>
+      <div class="card p-5" x-show="todayCheckedIn" style="background: linear-gradient(135deg, #f0f7ef, #faf8f0)">
+        <p class="text-gray-700">✅ Today's check-in complete. You rated your peace level: <strong x-text="dailyMood"></strong>/10</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOURNEY VIEW -->
+  <div x-show="currentView === 'journey'" class="flex-1 px-4 py-4">
+    <div class="max-w-lg mx-auto space-y-4">
+      <button @click="currentView = 'home'" class="flex items-center gap-2 text-gray-500 hover:text-gray-700 nav-item">
+        ← Back
+      </button>
+
+      <div class="card p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="text-3xl" x-text="phases[currentPhase]?.emoji"></span>
+          <div>
+            <h2 class="serif text-xl font-bold text-gray-800" x-text="'Phase ' + (currentPhase+1) + ': ' + phases[currentPhase]?.name"></h2>
+            <p class="text-sm text-gray-500" x-text="phases[currentPhase]?.subtitle"></p>
+          </div>
+        </div>
+        <p class="text-gray-600 mb-4" x-text="phases[currentPhase]?.longDescription"></p>
+      </div>
+
+      <!-- Grievance Selection/Creation -->
+      <div class="card p-5" x-show="currentPhase === 0 && grievances.length === 0">
+        <h3 class="serif text-base font-semibold text-gray-800 mb-3">🌱 Let's Begin</h3>
+        <p class="text-gray-600 text-sm mb-4">Think of a relationship or situation where you carry hurt. You don't need to share everything — just enough to start.</p>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Who is this about? (first name or description)</label>
+        <input type="text" x-model="newGrievancePerson" placeholder="e.g., My sister, An old friend..." class="w-full p-3 rounded-xl border border-gray-200 focus:border-green-400 focus:ring-2 focus:ring-green-100 outline-none mb-3">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Briefly, what happened?</label>
+        <textarea x-model="newGrievanceDesc" placeholder="In your own words, what still hurts..." class="w-full p-3 rounded-xl border border-gray-200 focus:border-green-400 focus:ring-2 focus:ring-green-100 outline-none h-24 resize-none mb-3"></textarea>
+        <button @click="addGrievance()" class="btn-primary text-white font-medium px-6 py-3 rounded-xl w-full transition-all" :class="{'opacity-50': !newGrievancePerson.trim() || !newGrievanceDesc.trim()}">
+          Save & Continue
+        </button>
+      </div>
+
+      <!-- Grievance List -->
+      <div x-show="grievances.length > 0" class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="serif text-base font-semibold text-gray-800">Your Journey Topics</h3>
+          <button @click="showAddGrievance = !showAddGrievance" class="text-sm font-medium" style="color: var(--sage-green)">+ Add another</button>
+        </div>
+
+        <div x-show="showAddGrievance" class="card p-4 fade-in">
+          <input type="text" x-model="newGrievancePerson" placeholder="Person's name..." class="w-full p-2.5 rounded-lg border border-gray-200 focus:border-green-400 outline-none mb-2 text-sm">
+          <textarea x-model="newGrievanceDesc" placeholder="What happened..." class="w-full p-2.5 rounded-lg border border-gray-200 focus:border-green-400 outline-none h-16 resize-none mb-2 text-sm"></textarea>
+          <button @click="addGrievance()" class="btn-primary text-white text-sm px-4 py-2 rounded-lg">Save</button>
+        </div>
+
+        <template x-for="(g, idx) in grievances" :key="g.id">
+          <div class="card p-4 cursor-pointer hover:shadow-md transition-all" @click="selectGrievance(idx)">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg" :style="'background:' + (selectedGrievanceIdx === idx ? 'var(--sage-green)' : '#E5E7EB')">
+                  <span x-text="g.person.charAt(0).toUpperCase()" :class="selectedGrievanceIdx === idx ? 'text-white' : 'text-gray-600'"></span>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-800" x-text="g.person"></p>
+                  <p class="text-xs text-gray-500 line-clamp-1" x-text="g.description"></p>
+                </div>
+              </div>
+              <span class="text-xs px-2 py-1 rounded-full" :style="'background: var(--warm-cream); color: var(--deep-sage)'" x-text="'Phase ' + (g.phase + 1)"></span>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Phase Exercises -->
+      <div x-show="grievances.length > 0 && selectedGrievanceIdx >= 0" class="space-y-3">
+        <h3 class="serif text-base font-semibold text-gray-800 mt-4">📋 Phase <span x-text="currentPhase + 1"></span> Activities</h3>
+        
+        <template x-for="(activity, aidx) in getCurrentActivities()" :key="aidx">
+          <div class="card p-4">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" 
+                :style="activity.completed ? 'background: var(--sage-green)' : 'background: #E5E7EB'">
+                <span x-show="activity.completed" class="text-white text-sm">✓</span>
+                <span x-show="!activity.completed" class="text-gray-400 text-sm" x-text="aidx + 1"></span>
+              </div>
+              <div class="flex-1">
+                <p class="font-medium text-gray-800 text-sm" x-text="activity.title"></p>
+                <p class="text-xs text-gray-500 mt-1" x-text="activity.description"></p>
+                <button x-show="!activity.completed" @click="startActivity(aidx)" class="mt-2 text-sm font-medium py-2 px-4 rounded-lg transition-all" style="background: var(--warm-cream); color: var(--deep-sage)">
+                  Start →
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <button x-show="canAdvancePhase()" @click="advancePhase()" class="btn-secondary text-white font-semibold px-6 py-3 rounded-xl w-full text-base transition-all mt-4">
+          Advance to Next Phase 🌱
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- COACH VIEW -->
+  <div x-show="currentView === 'coach'" class="flex-1 flex flex-col">
+    <div class="px-4 py-3 border-b border-gray-100 bg-white">
+      <div class="max-w-lg mx-auto flex items-center gap-3">
+        <button @click="currentView = 'home'" class="nav-item flex items-center justify-center">←</button>
+        <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: var(--sage-green)">
+          <span class="text-white text-lg">🌿</span>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-800">Forgiveness Coach</p>
+          <p class="text-xs text-gray-500">Here to listen and guide</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-4 py-4" id="chatContainer">
+      <div class="max-w-lg mx-auto space-y-3">
+        <template x-for="(msg, idx) in chatMessages" :key="idx">
+          <div class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
+            <div class="chat-bubble p-3.5 rounded-2xl text-sm slide-up" :class="msg.role === 'user' ? 'bg-green-50 text-gray-800 rounded-br-md' : 'bg-white border border-gray-100 text-gray-700 rounded-bl-md'" :style="msg.role !== 'user' ? 'border-left: 3px solid var(--sage-green)' : ''">
+              <p x-html="msg.content" style="white-space: pre-wrap;"></p>
+            </div>
+          </div>
+        </template>
+
+        <div x-show="isCoachTyping" class="flex justify-start">
+          <div class="chat-bubble p-3.5 rounded-2xl bg-white border border-gray-100 rounded-bl-md">
+            <div class="typing-indicator flex gap-1">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t border-gray-100 bg-white px-4 py-3">
+      <div class="max-w-lg mx-auto flex gap-2">
+        <textarea x-model="chatInput" @keydown.enter.prevent="if(!$event.shiftKey) sendMessage()" placeholder="Share what's on your heart..." class="flex-1 p-3 rounded-xl border border-gray-200 focus:border-green-400 focus:ring-2 focus:ring-green-100 outline-none resize-none text-sm" rows="1" style="min-height: 48px; max-height: 120px;"></textarea>
+        <button @click="sendMessage()" class="btn-primary text-white px-4 rounded-xl flex items-center justify-center nav-item" :disabled="isCoachTyping || !chatInput.trim()">
+          <span x-show="!isCoachTyping">➤</span>
+          <span x-show="isCoachTyping">...</span>
+        </button>
+      </div>
+      <div class="max-w-lg mx-auto mt-2 flex gap-2 overflow-x-auto pb-1">
+        <template x-for="suggestion in chatSuggestions" :key="suggestion">
+          <button @click="chatInput = suggestion; sendMessage()" class="text-xs whitespace-nowrap px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 flex-shrink-0">
+            <span x-text="suggestion"></span>
+          </button>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOURNAL VIEW -->
+  <div x-show="currentView === 'journal'" class="flex-1 px-4 py-4">
+    <div class="max-w-lg mx-auto space-y-4">
+      <div class="flex items-center justify-between">
+        <button @click="currentView = 'home'" class="flex items-center gap-2 text-gray-500 hover:text-gray-700 nav-item">← Back</button>
+        <h2 class="serif text-lg font-semibold text-gray-800">📝 My Journal</h2>
+        <div class="w-12"></div>
+      </div>
+
+      <!-- New Entry -->
+      <div class="card p-5">
+        <h3 class="font-medium text-gray-800 mb-2" x-text="getJournalPrompt()"></h3>
+        <textarea x-model="journalEntry" placeholder="Write freely here. This is your safe space..." class="w-full p-3 rounded-xl border border-gray-200 focus:border-green-400 focus:ring-2 focus:ring-green-100 outline-none h-32 resize-none mb-3"></textarea>
+        <div class="flex items-center justify-between">
+          <button @click="getAIJournalPrompt()" class="text-sm font-medium" style="color: var(--sage-green)">🔄 New prompt</button>
+          <button @click="saveJournalEntry()" class="btn-primary text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-all" :disabled="!journalEntry.trim()">
+            Save Entry
+          </button>
+        </div>
+      </div>
+
+      <!-- Past Entries -->
+      <div x-show="journalEntries.length > 0">
+        <h3 class="serif text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Past Reflections</h3>
+        <div class="space-y-3">
+          <template x-for="(entry, idx) in journalEntries.slice().reverse()" :key="entry.id">
+            <div class="card p-4 journal-entry">
+              <p class="text-xs text-gray-400 mb-1" x-text="new Date(entry.date).toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric'})"></p>
+              <p class="text-xs font-medium text-gray-500 mb-2" x-text="entry.prompt"></p>
+              <p class="text-sm text-gray-700" style="white-space: pre-wrap;" x-text="entry.content"></p>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXERCISES VIEW -->
+  <div x-show="currentView === 'exercises'" class="flex-1 px-4 py-4">
+    <div class="max-w-lg mx-auto space-y-4">
+      <div class="flex items-center justify-between">
+        <button @click="currentView = 'home'" class="flex items-center gap-2 text-gray-500 hover:text-gray-700 nav-item">← Back</button>
+        <h2 class="serif text-lg font-semibold text-gray-800">🧘 Exercises</h2>
+        <div class="w-12"></div>
+      </div>
+
+      <!-- Active Exercise -->
+      <div x-show="activeExercise" class="card p-6 fade-in">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="serif text-lg font-semibold text-gray-800" x-text="activeExercise?.title"></h3>
+          <button @click="activeExercise = null" class="text-gray-400 hover:text-gray-600 nav-item">✕</button>
+        </div>
+        
+        <div x-show="exerciseLoading" class="flex items-center justify-center py-8">
+          <div class="typing-indicator flex gap-1">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="ml-3 text-gray-500 text-sm">Creating your personalized exercise...</span>
+        </div>
+
+        <div x-show="!exerciseLoading && activeExerciseContent" class="space-y-4">
+          <div class="text-gray-700 text-sm leading-relaxed" x-html="activeExerciseContent"></div>
+          <textarea x-model="exerciseResponse" placeholder="Your response here..." class="w-full p-3 rounded-xl border border-gray-200 focus:border-green-400 focus:ring-2 focus:ring-green-100 outline-none h-24 resize-none"></textarea>
+          <button @click="completeExercise()" class="btn-primary text-white font-medium px-6 py-3 rounded-xl w-full transition-all">
+            Complete Exercise ✨
+          </button>
+        </div>
+      </div>
+
+      <!-- Exercise List -->
+      <div x-show="!activeExercise" class="space-y-3">
+        <template x-for="(ex, idx) in getExercisesForPhase()" :key="idx">
+          <div class="card p-4 hover:shadow-md transition-all cursor-pointer" @click="loadExercise(ex)">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl" x-text="ex.emoji"></span>
+              <div class="flex-1">
+                <p class="font-medium text-gray-800" x-text="ex.title"></p>
+                <p class="text-xs text-gray-500 mt-0.5" x-text="ex.duration"></p>
+              </div>
+              <span class="text-gray-400">→</span>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS VIEW -->
+  <div x-show="currentView === 'insights'" class="flex-1 px-4 py-4">
+    <div class="max-w-lg mx-auto space-y-4">
+      <div class="flex items-center justify-between">
+        <button @click="currentView = 'home'" class="flex items-center gap-2 text-gray-500 hover:text-gray-700 nav-item">← Back</button>
+        <h2 class="serif text-lg font-semibold text-gray-800">📊 My Insights</h2>
+        <div class="w-12"></div>
+      </div>
+
+      <!-- Emotional Journey Chart -->
+      <div class="card p-5">
+        <h3 class="serif text-base font-semibold text-gray-800 mb-3">Emotional Journey</h3>
+        <div x-show="moodHistory.length > 1" class="relative h-40">
+          <canvas id="moodChart" class="w-full h-full"></canvas>
+        </div>
+        <div x-show="moodHistory.length <= 1" class="text-center py-8">
+          <p class="text-gray-400 text-sm">Complete a few daily check-ins to see your progress here 📈</p>
+        </div>
+      </div>
+
+      <!-- Readiness Assessment -->
+      <div class="card p-5">
+        <h3 class="serif text-base font-semibold text-gray-800 mb-3">🌡️ Readiness for Reconciliation</h3>
+        <div class="flex items-center gap-4">
+          <svg class="progress-ring w-20 h-20" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="35" fill="none" stroke="#E5E7EB" stroke-width="6"/>
+            <circle cx="40" cy="40" r="35" fill="none" stroke="var(--sage-green)" stroke-width="6" 
+              stroke-linecap="round"
+              :stroke-dasharray="2 * Math.PI * 35"
+              :stroke-dashoffset="2 * Math.PI * 35 * (1 - getReadinessScore()/100)"/>
+          </svg>
+          <div>
+            <p class="text-3xl font-bold" style="color: var(--deep-sage)" x-text="getReadinessScore() + '%'"></p>
+            <p class="text-sm text-gray-500" x-text="getReadinessLabel()"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Analysis -->
+      <div class="card p-5">
+        <h3 class="serif text-base font-semibold text-gray-800 mb-3">💡 AI Insights</h3>
+        <button @click="generateInsights()" class="btn-primary text-white text-sm font-medium px-5 py-2.5 rounded-xl w-full mb-3" :disabled="insightsLoading" x-show="!latestInsights">
+          <span x-show="!insightsLoading">Generate My Insights</span>
+          <span x-show="insightsLoading">Analyzing your journey...</span>
+        </button>
+        <div x-show="latestInsights" class="text-sm text-gray-700 leading-relaxed" x-html="latestInsights"></div>
+        <button @click="generateInsights()" x-show="latestInsights" class="text-sm font-medium mt-3" style="color: var(--sage-green)" :disabled="insightsLoading">
+          🔄 Refresh insights
+        </button>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="card p-3 text-center">
+          <p class="text-2xl font-bold" style="color: var(--deep-sage)" x-text="journalEntries.length"></p>
+          <p class="text-xs text-gray-500">Journal Entries</p>
+        </div>
+        <div class="card p-3 text-center">
+          <p class="text-2xl font-bold" style="color: var(--warm-gold)" x-text="completedExercises.length"></p>
+          <p class="text-xs text-gray-500">Exercises Done</p>
+        </div>
+        <div class="card p-3 text-center">
+          <p class="text-2xl font-bold" style="color: var(--soft-lavender)" x-text="daysSinceStart()"></p>
+          <p class="text-xs text-gray-500">Days Active</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS VIEW -->
+  <div x-show="currentView === 'settings'" class="flex-1 px-4 py-4">
+    <div class="max-w-lg mx-auto space-y-4">
+      <div class="flex items-center justify-between">
+        <button @click="currentView = 'home'" class="flex items-center gap-2 text-gray-500 hover:text-gray-700 nav-item">← Back</button>
+        <h2 class="serif text-lg font-semibold text-gray-800">⚙️ Settings</h2>
+        <div class="w-12"></div>
+      </div>
+
+      <div class="card p-5 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+          <input type="text" x-model="userName" @change="saveData()" class="w-full p-3 rounded-xl border border-gray-200 focus:border-green-400 outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Reminders</label>
+          <p class="text-xs text-gray-500 mb-2">Gentle nudges to check in with yourself</p>
+          <select x-model="reminderFrequency" @change="saveData()" class="w-full p-3 rounded-xl border border-gray-200 focus:border-green-400 outline-none">
+            <option value="daily">Daily</option>
+            <option value="every_other_day">Every other day</option>
+            <option value="weekly">Weekly</option>
+            <option value="off">Off</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card p-5">
+        <h3 class="font-medium text-gray-800 mb-2">🔒 Your Privacy</h3>
+        <p class="text-sm text-gray-600">All your data is stored locally on this device. Nothing is shared without your explicit consent. Your forgiveness journey is yours alone.</p>
+      </div>
+
+      <div class="card p-5">
+        <h3 class="font-medium text-gray-800 mb-3">Reset Journey</h3>
+        <p class="text-sm text-gray-600 mb-3">This will clear all your data and start fresh. This cannot be undone.</p>
+        <button @click="if(confirm('Are you sure you want to reset everything? This cannot be undone.')) resetAll()" class="text-sm text-red-500 font-medium py-2 px-4 border border-red-200 rounded-xl hover:bg-red-50">
+          Reset All Data
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 safe-area-bottom">
+    <div class="max-w-lg mx-auto flex justify-around py-2">
+      <button @click="currentView = 'home'" class="nav-item flex flex-col items-center justify-center px-4 py-1 rounded-lg" :class="currentView === 'home' ? 'text-green-700' : 'text-gray-400'">
+        <span class="text-xl">🏠</span>
+        <span class="text-xs mt-0.5">Home</span>
+      </button>
+      <button @click="currentView = 'journey'" class="nav-item flex flex-col items-center justify-center px-4 py-1 rounded-lg" :class="currentView === 'journey' ? 'text-green-700' : 'text-gray-400'">
+        <span class="text-xl">🕊️</span>
+        <span class="text-xs mt-0.5">Journey</span>
+      </button>
+      <button @click="currentView = 'coach'" class="nav-item flex flex-col items-center justify-center px-4 py-1 rounded-lg" :class="currentView === 'coach' ? 'text-green-700' : 'text-gray-400'">
+        <span class="text-xl">💬</span>
+        <span class="text-xs mt-0.5">Coach</span>
+      </button>
+      <button @click="currentView = 'journal'" class="nav-item flex flex-col items-center justify-center px-4 py-1 rounded-lg" :class="currentView === 'journal' ? 'text-green-700' : 'text-gray-400'">
+        <span class="text-xl">📝</span>
+        <span class="text-xs mt-0.5">Journal</span>
+      </button>
+      <button @click="currentView = 'insights'" class="nav-item flex flex-col items-center justify-center px-4 py-1 rounded-lg" :class="currentView === 'insights' ? 'text-green-700' : 'text-gray-400'">
+        <span class="text-xl">📊</span>
+        <span class="text-xs mt-0.5">Insights</span>
+      </button>
+    </div>
+  </nav>
+</div>
+
+<!-- Loading Overlay -->
+<div x-show="globalLoading" x-transition class="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
+  <div class="card p-6 mx-4 text-center">
+    <div class="typing-indicator flex gap-1 justify-center mb-3">
+      <span></span><span></span><span></span>
+    </div>
+    <p class="text-gray-600 text-sm" x-text="loadingMessage"></p>
+  </div>
+</div>
+
+<script>
+// Global AI tracking variables
+window.aiTotalInputTokens = 0;
+window.aiTotalOutputTokens = 0;
+window.aiTotalTime = 0;
+window.aiTimings = {};
+
+function app() {
+  return {
+    // State
+    currentView: 'onboarding',
+    onboardingStep: 0,
+    userName: '',
+    currentPhase: 0,
+    grievances: [],
+    selectedGrievanceIdx: -1,
+    newGrievancePerson: '',
+    newGrievanceDesc: '',
+    showAddGrievance: false,
+    dailyMood: 5,
+    todayCheckedIn: false,
+    moodHistory: [],
+    chatMessages: [],
+    chatInput: '',
+    isCoachTyping: false,
+    chatSuggestions: [],
+    journalEntry: '',
+    journalEntries: [],
+    currentJournalPrompt: '',
+    activeExercise: null,
+    activeExerciseContent: '',
+    exerciseResponse: '',
+    exerciseLoading: false,
+    completedExercises: [],
+    latestInsights: '',
+    insightsLoading: false,
+    globalLoading: false,
+    loadingMessage: '',
+    reminderFrequency: 'daily',
+    startDate: null,
+
+    phases: [
+      { name: 'Uncovering', shortName: 'Uncover', emoji: '📖', subtitle: 'Name what happened',
+        description: 'Acknowledge the hurt and understand its impact on your life.',
+        longDescription: 'In this first phase, we gently explore what happened and how it has affected you. There\'s no rush — simply naming the pain is a powerful first step. We\'ll help you articulate the injury, recognize the emotions you carry, and understand how this grievance has shaped your daily life and relationships.' },
+      { name: 'Decision', shortName: 'Decide', emoji: '💭', subtitle: 'Choose to explore forgiveness',
+        description: 'Make a conscious choice to explore the path of forgiveness.',
+        longDescription: 'This phase is about understanding what forgiveness is and isn\'t. It\'s not condoning, excusing, or forgetting. It\'s a gift you give yourself. Here you\'ll explore whether you\'re ready to make a commitment to try forgiveness, understanding the benefits for your own peace and well-being.' },
+      { name: 'Work', shortName: 'Work', emoji: '🤝', subtitle: 'Build empathy & understanding',
+        description: 'Develop empathy and reframe the experience.',
+        longDescription: 'The heart of the forgiveness process. Through guided exercises, you\'ll work on seeing the situation from different perspectives, developing compassion (not excusing), and understanding the human complexity behind hurtful actions. This is often the most transformative phase.' },
+      { name: 'Discovery', shortName: 'Discover', emoji: '🌱', subtitle: 'Find meaning in the pain',
+        description: 'Discover meaning and growth from your experience.',
+        longDescription: 'Pain can become a teacher. In this phase, you\'ll explore what strengths you\'ve developed, what wisdom you\'ve gained, and how your experience might serve others. Many people find unexpected gifts in their suffering when they look with open eyes.' },
+      { name: 'Deepening', shortName: 'Deepen', emoji: '🕊️', subtitle: 'Release and reconcile',
+        description: 'Deepen forgiveness and consider reconciliation.',
+        longDescription: 'The final phase focuses on emotional release, considering whether and how to reach out to the other person, and creating a lasting sense of peace. We\'ll help you craft language for reconciliation if appropriate, or find closure on your own terms.' }
+    ],
+
+    // Initialize
+    init() {
+      this.loadData();
+      if (this.userName && this.startDate) {
+        this.currentView = 'home';
+        this.checkTodayCheckin();
+        this.updateChatSuggestions();
+      }
+      this.$watch('currentView', (val) => {
+        if (val === 'insights' && this.moodHistory.length > 1) {
+          this.$nextTick(() => this.drawMoodChart());
+        }
+        if (val === 'coach' && this.chatMessages.length === 0) {
+          this.initCoachChat();
+        }
+      });
+    },
+
+    // Data persistence
+    saveData() {
+      const data = {
+        userName: this.userName,
+        currentPhase: this.currentPhase,
+        grievances: this.grievances,
+        selectedGrievanceIdx: this.selectedGrievanceIdx,
+        moodHistory: this.moodHistory,
+        chatMessages: this.chatMessages,
+        journalEntries: this.journalEntries,
+        completedExercises: this.completedExercises,
+        startDate: this.startDate,
+        reminderFrequency: this.reminderFrequency,
+        currentJournalPrompt: this.currentJournalPrompt
+      };
+      localStorage.setItem('forgiveness_journey', JSON.stringify(data));
+    },
+
+    loadData() {
+      try {
+        const data = JSON.parse(localStorage.getItem('forgiveness_journey'));
+        if (data) {
+          Object.keys(data).forEach(key => {
+            if (this.hasOwnProperty(key) && data[key] !== undefined) {
+              this[key] = data[key];
+            }
+          });
+        }
+      } catch(e) { console.log('No saved data'); }
+    },
+
+    resetAll() {
+      localStorage.removeItem('forgiveness_journey');
+      location.reload();
+    },
+
+    // Onboarding
+    completeOnboarding() {
+      this.startDate = new Date().toISOString();
+      this.currentView = 'home';
+      this.currentJournalPrompt = this.getDefaultJournalPrompt();
+      this.saveData();
+      this.initCoachChat();
+    },
+
+    // Helpers
+    timeOfDay() {
+      const h = new Date().getHours();
+      if (h < 12) return 'morning';
+      if (h < 17) return 'afternoon';
+      return 'evening';
+    },
+
+    daysSinceStart() {
+      if (!this.startDate) return 0;
+      return Math.max(1, Math.ceil((Date.now() - new Date(this.startDate).getTime()) / 86400000));
+    },
+
+    getDailyEncouragement() {
+      const msgs = [
+        "Every step on this path takes courage. You're doing beautifully.",
+        "Forgiveness is not about the other person — it's a gift to yourself.",
+        "There's no timeline for healing. Trust your own pace.",
+        "The fact that you're here shows incredible strength.",
+        "Peace is not the absence of conflict, but the ability to cope with it.",
+        "You deserve the freedom that comes with letting go.",
+        "Today is another chance to choose peace over pain.",
+        "Your willingness to grow is inspiring. Keep going."
+      ];
+      const dayIdx = this.daysSinceStart() % msgs.length;
+      return msgs[dayIdx];
+    },
+
+    getPhaseProgress() {
+      const activities = this.getCurrentActivities();
+      if (!activities || activities.length === 0) return 0;
+      const completed = activities.filter(a => a.completed).length;
+      return Math.round((completed / activities.length) * 100);
+    },
+
+    checkTodayCheckin() {
+      const today = new Date().toDateString();
+      this.todayCheckedIn = this.moodHistory.some(m => new Date(m.date).toDateString() === today);
+      if (this.todayCheckedIn) {
+        const todayEntry = this.moodHistory.find(m => new Date(m.date).toDateString() === today);
+        if (todayEntry) this.dailyMood = todayEntry.mood;
+      }
+    },
+
+    submitCheckin() {
+      this.moodHistory.push({ date: new Date().toISOString(), mood: parseInt(this.dailyMood), phase: this.currentPhase });
+      this.todayCheckedIn = true;
+      this.saveData();
+      if (parseInt(this.dailyMood) >= 7) {
+        confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 }, colors: ['#7D9B76','#D4A853','#B8A9C9'] });
+      }
+    },
+
+    // Grievances
+    addGrievance() {
+      if (!this.newGrievancePerson.trim() || !this.newGrievanceDesc.trim()) return;
+      this.grievances.push({
+        id: Date.now(),
+        person: this.newGrievancePerson.trim(),
+        description: this.newGrievanceDesc.trim(),
+        phase: 0,
+        activities: this.generateActivitiesForPhase(0),
+        createdAt: new Date().toISOString()
+      });
+      this.selectedGrievanceIdx = this.grievances.length - 1;
+      this.newGrievancePerson = '';
+      this.newGrievanceDesc = '';
+      this.showAddGrievance = false;
+      this.saveData();
+    },
+
+    selectGrievance(idx) {
+      this.selectedGrievanceIdx = idx;
+      this.currentPhase = this.grievances[idx].phase;
+      this.saveData();
+    },
+
+    generateActivitiesForPhase(phase) {
+      const allActivities = [
+        // Phase 0 - Uncovering
+        [
+          { title: 'Name the Hurt', description: 'Write down exactly what happened in factual terms.', completed: false },
+          { title: 'Emotional Inventory', description: 'Identify all the emotions this situation brings up.', completed: false },
+          { title: 'Impact Assessment', description: 'How has this affected your daily life and relationships?', completed: false },
+          { title: 'Letter to Yourself', description: 'Write a compassionate letter to yourself about this pain.', completed: false }
+        ],
+        // Phase 1 - Decision
+        [
+          { title: 'Understanding Forgiveness', description: 'Explore what forgiveness means (and doesn\'t mean).', completed: false },
+          { title: 'Cost of Holding On', description: 'Reflect on what this grievance costs you emotionally.', completed: false },
+          { title: 'Benefits of Letting Go', description: 'Imagine how your life might change with forgiveness.', completed: false },
+          { title: 'Commitment Statement', description: 'Write a personal commitment to try the forgiveness path.', completed: false }
+        ],
+        // Phase 2 - Work
+        [
+          { title: 'Perspective Taking', description: 'Try to understand the other person\'s context and struggles.', completed: false },
+          { title: 'Shared Humanity', description: 'Reflect on times you have hurt others, intentionally or not.', completed: false },
+          { title: 'Empathy Practice', description: 'A guided exercise to develop compassion for the offender.', completed: false },
+          { title: 'Reframing the Story', description: 'Rewrite the narrative with more complexity and nuance.', completed: false }
+        ],
+        // Phase 3 - Discovery
+        [
+          { title: 'Gifts in the Pain', description: 'Identify strengths you\'ve developed from this experience.', completed: false },
+          { title: 'Legacy Reflection', description: 'How does this experience shape what you want to pass on?', completed: false },
+          { title: 'Meaning Making', description: 'Find purpose or meaning in what you\'ve been through.', completed: false },
+          { title: 'Gratitude Practice', description: 'Find gratitude even in difficulty — what are you thankful for?', completed: false }
+        ],
+        // Phase 4 - Deepening
+        [
+          { title: 'Emotional Release', description: 'A guided letting-go ritual for your accumulated pain.', completed: false },
+          { title: 'Reconciliation Assessment', description: 'Evaluate if and how reaching out might be appropriate.', completed: false },
+          { title: 'Crafting Words', description: 'Draft language for a reconciliation conversation or letter.', completed: false },
+          { title: 'Peace Declaration', description: 'Write your personal declaration of peace and closure.', completed: false }
+        ]
+      ];
+      return allActivities[phase] || allActivities[0];
+    },
+
+    getCurrentActivities() {
+      if (this.selectedGrievanceIdx < 0 || !this.grievances[this.selectedGrievanceIdx]) return [];
+      return this.grievances[this.selectedGrievanceIdx].activities;
+    },
+
+    canAdvancePhase() {
+      const activities = this.getCurrentActivities();
+      return activities.length > 0 && activities.every(a => a.completed) && this.currentPhase < 4;
+    },
+
+    advancePhase() {
+      if (this.currentPhase >= 4) return;
+      this.currentPhase++;
+      if (this.selectedGrievanceIdx >= 0) {
+        this.grievances[this.selectedGrievanceIdx].phase = this.currentPhase;
+        this.grievances[this.selectedGrievanceIdx].activities = this.generateActivitiesForPhase(this.currentPhase);
+      }
+      this.saveData();
+      confetti({ particleCount: 80, spread: 100, origin: { y: 0.6 }, colors: ['#7D9B76','#D4A853','#B8A9C9','#E8967A'] });
+    },
+
+    async startActivity(aidx) {
+      const activities = this.getCurrentActivities();
+      const activity = activities[aidx];
+      this.activeExercise = activity;
+      this.exerciseLoading = true;
+      this.exerciseResponse = '';
+      this.currentView = 'exercises';
+
+      const grievance = this.grievances[this.selectedGrievanceIdx];
+      const prompt = `You are a compassionate forgiveness therapy coach working with an older adult (empty-nester/retiree). 
+The person's name is ${this.userName}. They are working on forgiving someone named "${grievance.person}" for: "${grievance.description}".
+They are in Phase ${this.currentPhase + 1} (${this.phases[this.currentPhase].name}) of their forgiveness journey.
+
+Create a guided exercise for the activity: "${activity.title}" - ${activity.description}
+
+Write the exercise in a warm, gentle, respectful tone appropriate for a mature adult. Include:
+1. A brief introduction (2-3 sentences)
+2. Step-by-step instructions (3-5 steps)
+3. A reflective question to answer
+
+Format the response as HTML with <p>, <ol>, <li>, <strong> tags for structure.
+
+Return a JSON object with exactly this structure:
+{
+  "exercise_html": "string containing the HTML formatted exercise content"
+}`;
+
+      try {
+        const result = await this.callAI(prompt);
+        this.activeExerciseContent = result.exercise_html;
+      } catch(e) {
+        this.activeExerciseContent = `<p>Let's work on <strong>${activity.title}</strong>.</p>
+<p>${activity.description}</p>
+<p>Take a moment to reflect on this in the context of your situation with ${grievance.person}. Write your thoughts below.</p>`;
+      }
+      this.exerciseLoading = false;
+    },
+
+    completeExercise() {
+      if (!this.activeExercise) return;
+      const activities = this.getCurrentActivities();
+      const idx = activities.findIndex(a => a.title === this.activeExercise.title);
+      if (idx >= 0) {
+        activities[idx].completed = true;
+      }
+      this.completedExercises.push({
+        title: this.activeExercise.title,
+        response: this.exerciseResponse,
+        date: new Date().toISOString(),
+        phase: this.currentPhase
+      });
+      this.activeExercise = null;
+      this.activeExerciseContent = '';
+      this.exerciseResponse = '';
+      this.saveData();
+      confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 }, colors: ['#7D9B76','#D4A853'] });
+    },
+
+    getExercisesForPhase() {
+      return [
+        { title: 'Guided Breathing', emoji: '🌬️', duration: '5 minutes', type: 'breathing' },
+        { title: 'Compassion Meditation', emoji: '🧘', duration: '10 minutes', type: 'meditation' },
+        { title: 'Unsent Letter', emoji: '✉️', duration: '15 minutes', type: 'writing' },
+        { title: 'Empathy Visualization', emoji: '👁️', duration: '10 minutes', type: 'visualization' },
+        { title: 'Body Scan for Grief', emoji: '🫂', duration: '10 minutes', type: 'body_scan' }
+      ];
+    },
+
+    async loadExercise(ex) {
+      this.activeExercise = ex;
+      this.exerciseLoading = true;
+      this.exerciseResponse = '';
+      this.activeExerciseContent = '';
+
+      const grievanceContext = this.selectedGrievanceIdx >= 0 
+        ? `They are forgiving "${this.grievances[this.selectedGrievanceIdx].person}" for: "${this.grievances[this.selectedGrievanceIdx].description}".`
+        : 'They are exploring general forgiveness.';
+
+      const prompt = `You are a compassionate forgiveness and wellness coach for older adults (retirees/empty-nesters).
+The person's name is ${this.userName}. ${grievanceContext}
+They are in Phase ${this.currentPhase + 1} (${this.phases[this.currentPhase].name}).
+
+Create a detailed, step-by-step guided "${ex.title}" exercise (type: ${ex.type}, ~${ex.duration}).
+Make it warm, gentle, specific, and therapeutic. Include clear instructions they can follow.
+Tailor it to their forgiveness context.
+
+Format as HTML with <p>, <ol>, <li>, <strong>, <em> tags.
+
+Return a JSON object with exactly this structure:
+{
+  "exercise_html": "string containing the HTML formatted exercise"
+}`;
+
+      try {
+        const result = await this.callAI(prompt);
+        this.activeExerciseContent = result.exercise_html;
+      } catch(e) {
+        this.activeExerciseContent = `<p>Let's practice <strong>${ex.title}</strong>.</p>
+<p>Find a quiet, comfortable place. Close your eyes and take three deep breaths.</p>
+<p>As you breathe, think about your journey toward forgiveness. What comes up for you?</p>
+<p>When you're ready, write your reflections below.</p>`;
+      }
+      this.exerciseLoading = false;
+    },
+
+    // Coach Chat
+    async initCoachChat() {
+      if (this.chatMessages.length > 0) return;
+      
+      const grievanceContext = this.grievances.length > 0 
+        ? `They are working on forgiving "${this.grievances[0].person}".`
+        : '';
+
+      this.chatMessages.push({
+        role: 'assistant',
+        content: `Hello, ${this.userName}. 🌿 I'm your forgiveness journey coach. This is a safe space where you can share anything that's on your heart.\n\n${this.grievances.length > 0 ? `I see you've begun exploring your feelings about ${this.grievances[0].person}. ` : ''}How are you feeling right now? What would be most helpful for us to explore together today?`
+      });
+      this.updateChatSuggestions();
+      this.saveData();
+    },
+
+    updateChatSuggestions() {
+      const phaseSpecific = [
+        ["I'm struggling to admit what happened", "The hurt feels overwhelming", "I don't know where to start"],
+        ["What does forgiveness really mean?", "I'm not sure I'm ready", "Will forgiving mean condoning?"],
+        ["I want to understand their perspective", "I've hurt people too", "How do I build empathy?"],
+        ["What have I learned from this?", "Can pain have a purpose?", "I feel stuck in this phase"],
+        ["Should I reach out?", "Help me find the right words", "How do I let go completely?"]
+      ];
+      this.chatSuggestions = phaseSpecific[this.currentPhase] || phaseSpecific[0];
+    },
+
+    async sendMessage() {
+      if (!this.chatInput.trim() || this.isCoachTyping) return;
+      
+      const userMsg = this.chatInput.trim();
+      this.chatInput = '';
+      this.chatMessages.push({ role: 'user', content: userMsg });
+      this.isCoachTyping = true;
+      this.saveData();
+      
+      this.$nextTick(() => {
+        const container = document.getElementById('chatContainer');
+        if (container) container.scrollTop = container.scrollHeight;
+      });
+
+      const recentMessages = this.chatMessages.slice(-8).map(m => `${m.role === 'user' ? this.userName : 'Coach'}: ${m.content}`).join('\n');
+      
+      const grievanceContext = this.selectedGrievanceIdx >= 0 
+        ? `Working on forgiving "${this.grievances[this.selectedGrievanceIdx].person}" for: "${this.grievances[this.selectedGrievanceIdx].description}".`
+        : this.grievances.length > 0
+        ? `Working on forgiving "${this.grievances[0].person}" for: "${this.grievances[0].description}".`
+        : 'No specific grievance identified yet.';
+
+      const prompt = `You are a compassionate, wise forgiveness therapy coach designed for older adults (empty-nesters and retirees). Your approach is based on Robert Enright's evidence-based forgiveness model.
+
+CONTEXT:
+- User: ${this.userName}
+- ${grievanceContext}
+- Current Phase: ${this.currentPhase + 1} (${this.phases[this.currentPhase].name})
+- Days on journey: ${this.daysSinceStart()}
+- Journal entries: ${this.journalEntries.length}
+- Completed exercises: ${this.completedExercises.length}
+
+CONVERSATION HISTORY:
+${recentMessages}
+
+GUIDELINES:
+- Be warm, gentle, patient, and validating
+- Use the person's name occasionally
+- Ask one thoughtful question at a time
+- Acknowledge emotions before offering guidance
+- Share brief wisdom or therapeutic insights when appropriate
+- Reference their specific situation when relevant
+- Keep responses 2-4 short paragraphs
+- Use appropriate emojis sparingly (1-2 max)
+- Consider their life stage (legacy, adult children, retirement)
+- Never minimize their pain or rush forgiveness
+- If they mention reconciliation language, help craft specific phrases
+
+Respond as the coach to "${userMsg}".
+
+Return a JSON object with exactly this structure:
+{
+  "response": "string containing the coach's response"
+}`;
+
+      try {
+        const result = await this.callAI(prompt);
+        this.chatMessages.push({ role: 'assistant', content: result.response });
+      } catch(e) {
+        this.chatMessages.push({ 
+          role: 'assistant', 
+          content: `I appreciate you sharing that, ${this.userName}. That takes courage. 🌿\n\nI'm having a moment of reflection myself — could you tell me a bit more about how that makes you feel? Sometimes naming our emotions helps us understand them better.`
+        });
+      }
+      
+      this.isCoachTyping = false;
+      this.saveData();
+      this.$nextTick(() => {
+        const container = document.getElementById('chatContainer');
+        if (container) container.scrollTop = container.scrollHeight;
+      });
+    },
+
+    // Journal
+    getDefaultJournalPrompt() {
+      const prompts = [
+        "What moment from the past still weighs on your heart today?",
+        "If you could say one thing to the person who hurt you, what would it be?",
+        "What would your life look like if you were at peace with this?",
+        "Describe a moment when you felt truly forgiven by someone.",
+        "What does forgiveness mean to you right now?",
+        "Write about a time when holding onto anger served you — and a time it didn't.",
+        "What legacy do you want to leave regarding this relationship?",
+        "If your wisest self could advise your hurting self, what would they say?"
+      ];
+      return prompts[Math.floor(Math.random() * prompts.length)];
+    },
+
+    getJournalPrompt() {
+      return this.currentJournalPrompt || this.getDefaultJournalPrompt();
+    },
+
+    async getAIJournalPrompt() {
+      const grievanceContext = this.grievances.length > 0 
+        ? `They are forgiving "${this.grievances[0].person}" for: "${this.grievances[0].description}".`
+        : 'General forgiveness exploration.';
+
+      const prompt = `Generate a single thoughtful, therapeutic journal prompt for an older adult (retiree/empty-nester) on a forgiveness journey.
+${grievanceContext}
+They are in Phase ${this.currentPhase + 1} (${this.phases[this.currentPhase].name}).
+Previous entries: ${this.journalEntries.length}
+
+The prompt should be:
+- One sentence, warm and inviting
+- Specific to their phase and situation
+- Not too heavy — gently probing
+- Different from generic prompts
+
+Return a JSON object with exactly this structure:
+{
+  "prompt": "string containing the journal prompt"
+}`;
+
+      try {
+        const result = await this.callAI(prompt);
+        this.currentJournalPrompt = result.prompt;
+      } catch(e) {
+        this.currentJournalPrompt = this.getDefaultJournalPrompt();
+      }
+    },
+
+    saveJournalEntry() {
+      if (!this.journalEntry.trim()) return;
+      this.journalEntries.push({
+        id: Date.now(),
+        prompt: this.currentJournalPrompt,
+        content: this.journalEntry.trim(),
+        date: new Date().toISOString(),
+        phase: this.currentPhase,
+        mood: this.dailyMood
+      });
+      this.journalEntry = '';
+      this.currentJournalPrompt = this.getDefaultJournalPrompt();
+      this.saveData();
+      confetti({ particleCount: 25, spread: 40, origin: { y: 0.8 }, colors: ['#7D9B76','#B8A9C9'] });
+    },
+
+    // Insights
+    getReadinessScore() {
+      let score = 0;
+      score += Math.min(this.currentPhase * 15, 60);
+      score += Math.min(this.journalEntries.length * 3, 15);
+      score += Math.min(this.completedExercises.length * 3, 15);
+      if (this.moodHistory.length > 0) {
+        const recentMoods = this.moodHistory.slice(-5);
+        const avgMood = recentMoods.reduce((s,m) => s + m.mood, 0) / recentMoods.length;
+        score += Math.min(Math.round(avgMood), 10);
+      }
+      return Math.min(score, 100);
+    },
+
+    getReadinessLabel() {
+      const score = this.getReadinessScore();
+      if (score < 20) return 'Beginning the journey';
+      if (score < 40) return 'Building awareness';
+      if (score < 60) return 'Growing in understanding';
+      if (score < 80) return 'Approaching readiness';
+      return 'Ready for reconciliation';
+    },
+
+    async generateInsights() {
+      this.insightsLoading = true;
+
+      const moodSummary = this.moodHistory.length > 0 
+        ? `Mood ratings over time: ${this.moodHistory.map(m => m.mood + '/10 on ' + new Date(m.date).toLocaleDateString()).join(', ')}`
+        : 'No mood data yet.';
+
+      const journalSummary = this.journalEntries.length > 0
+        ? `Recent journal themes: ${this.journalEntries.slice(-3).map(e => e.content.substring(0, 100)).join(' | ')}`
+        : 'No journal entries yet.';
+
+      const grievanceContext = this.grievances.length > 0
+        ? `Working on forgiving: ${this.grievances.map(g => g.person).join(', ')}`
+        : 'No grievances identified.';
+
+      const prompt = `You are an analytical forgiveness therapy coach providing insights to an older adult (retiree/empty-nester).
+
+USER DATA:
+- Name: ${this.userName}
+- Days on journey: ${this.daysSinceStart()}
+- Current phase: ${this.currentPhase + 1}/5 (${this.phases[this.currentPhase].name})
+- ${grievanceContext}
+- ${moodSummary}
+- ${journalSummary}
+- Completed exercises: ${this.completedExercises.length}
+- Readiness score: ${this.getReadinessScore()}%
+
+Provide a brief, encouraging, personalized analysis including:
+1. A pattern or trend you notice in their emotional data
+2. One specific strength they're showing
+3. One gentle suggestion for their next step
+4. An encouraging observation about their progress
+
+Keep it warm, specific, and 3-4 short paragraphs. Use emojis sparingly.
+Format as HTML with <p> tags.
+
+Return a JSON object with exactly this structure:
+{
+  "insights_html": "string containing the HTML formatted insights"
+}`;
+
+      try {
+        const result = await this.callAI(prompt);
+        this.latestInsights = result.insights_html;
+      } catch(e) {
+        this.latestInsights = `<p>🌿 You've been on this journey for <strong>${this.daysSinceStart()} days</strong>, and that persistence speaks volumes about your commitment to healing.</p>
+<p>You're in Phase ${this.currentPhase + 1} with ${this.completedExercises.length} exercises completed. Keep going at your own pace — there's no rush on the path to peace.</p>
+<p>Consider doing a journal entry today to continue processing your feelings. Writing often reveals insights we can't access through thinking alone.</p>`;
+      }
+      this.insightsLoading = false;
+      this.saveData();
+    },
+
+    drawMoodChart() {
+      const canvas = document.getElementById('moodChart');
+      if (!canvas || this.moodHistory.length < 2) return;
+      
+      const ctx = canvas.getContext('2d');
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * 2;
+      canvas.height = rect.height * 2;
+      ctx.scale(2, 2);
+      
+      const w = rect.width;
+      const h = rect.height;
+      const padding = { top: 10, right: 10, bottom: 25, left: 30 };
+      const plotW = w - padding.left - padding.right;
+      const plotH = h - padding.top - padding.bottom;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Grid lines
+      ctx.strokeStyle = '#E5E7EB';
+      ctx.lineWidth = 0.5;
+      for (let i = 0; i <= 10; i += 2) {
+        const y = padding.top + plotH - (i / 10) * plotH;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(w - padding.right, y);
+        ctx.stroke();
+        ctx.fillStyle = '#9CA3AF';
+        ctx.font = '10px Inter';
+        ctx.textAlign = 'right';
+        ctx.fillText(i, padding.left - 5, y + 3);
+      }
+
+      // Data line
+      const data = this.moodHistory;
+      const stepX = plotW / Math.max(data.length - 1, 1);
+
+      // Gradient fill
+      const gradient = ctx.createLinearGradient(0, padding.top, 0, h - padding.bottom);
+      gradient.addColorStop(0, 'rgba(125,155,118,0.3)');
+      gradient.addColorStop(1, 'rgba(125,155,118,0.02)');
+
+      ctx.beginPath();
+      ctx.moveTo(padding.left, padding.top + plotH);
+      data.forEach((d, i) => {
+        const x = padding.left + i * stepX;
+        const y = padding.top + plotH - (d.mood / 10) * plotH;
+        ctx.lineTo(x, y);
+      });
+      ctx.lineTo(padding.left + (data.length - 1) * stepX, padding.top + plotH);
+      ctx.closePath();
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Line
+      ctx.beginPath();
+      ctx.strokeStyle = '#7D9B76';
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      data.forEach((d, i) => {
+        const x = padding.left + i * stepX;
+        const y = padding.top + plotH - (d.mood / 10) * plotH;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Dots
+      data.forEach((d, i) => {
+        const x = padding.left + i * stepX;
+        const y = padding.top + plotH - (d.mood / 10) * plotH;
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#7D9B76';
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+    },
+
+    // AI Call Helper
+    async callAI(prompt, retries = 3) {
+      const startTime = Date.now();
+      
+      for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+          const response = await fetch('https://16504442930.work/run_prompt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              alias: 'genericAI',
+              params: { prompt: prompt }
+            })
+          });
+
+          if (!response.ok) {
+            const errText = await response.text();
+            if (attempt === retries) {
+              // Use AI to format error
+              throw new Error(`API Error after ${retries} attempts: ${errText}`);
+            }
+            await new Promise(r => setTimeout(r, 1000 * attempt));
+            continue;
+          }
+
+          const data = await response.json();
+          
+          // Track tokens and timing
+          const elapsed = Date.now() - startTime;
+          window.aiTotalTime += elapsed;
+          if (!window.aiTimings['genericAI']) window.aiTimings['genericAI'] = 0;
+          window.aiTimings['genericAI'] += elapsed;
+          
+          if (data.input_tokens) window.aiTotalInputTokens += data.input_tokens;
+          if (data.output_tokens) window.aiTotalOutputTokens += data.output_tokens;
+
+          return data;
+        } catch(e) {
+          if (attempt === retries) {
+            console.error('AI call failed:', e);
+            throw e;
+          }
+          await new Promise(r => setTimeout(r, 1000 * attempt));
+        }
+      }
+    }
+  };
+}
+</script>
+</body>
+</html>
